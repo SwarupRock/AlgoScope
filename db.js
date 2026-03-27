@@ -1,15 +1,58 @@
 // db.js — MySQL database layer for AlgoScope
 const mysql = require('mysql2/promise');
 
+const dbName = process.env.DB_NAME || 'algoscope';
+
 const pool = mysql.createPool({
   host:     process.env.DB_HOST     || 'localhost',
   user:     process.env.DB_USER     || 'root',
   password: process.env.DB_PASSWORD || 'algoscope123',
-  database: process.env.DB_NAME     || 'algoscope',
+  database: dbName,
   port:     process.env.DB_PORT     || 3306,
   waitForConnections: true,
   connectionLimit: 10
 });
+
+async function initializeDatabase() {
+  const host = process.env.DB_HOST || 'localhost';
+  const user = process.env.DB_USER || 'root';
+  const password = process.env.DB_PASSWORD || 'algoscope123';
+  const port = process.env.DB_PORT || 3306;
+
+  const adminConnection = await mysql.createConnection({ host, user, password, port });
+  await adminConnection.query(
+    `CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+  );
+  await adminConnection.end();
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(50) NOT NULL UNIQUE,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL,
+      role ENUM('user','admin') NOT NULL DEFAULT 'user',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS visualizations (
+      id VARCHAR(36) PRIMARY KEY,
+      user_id INT NULL,
+      code MEDIUMTEXT NOT NULL,
+      trace_json JSON NOT NULL,
+      algorithm VARCHAR(120) NULL,
+      data_structure VARCHAR(50) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_visualizations_user_id (user_id),
+      INDEX idx_visualizations_created_at (created_at),
+      CONSTRAINT fk_visualizations_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+}
 
 // ── User helpers ──────────────────────────────────────────────────────────────
 async function createUser(username, email, passwordHash) {
@@ -95,7 +138,8 @@ async function getSchema() {
   const schema = {};
   for (const t of tables) {
     const tName = Object.values(t)[0];
-    const [cols] = await pool.execute(`DESCRIBE ${tName}`);
+    const safeName = String(tName).replace(/`/g, '``');
+    const [cols] = await pool.execute(`DESCRIBE \`${safeName}\``);
     schema[tName] = cols;
   }
   return schema;
@@ -109,6 +153,7 @@ async function testConnection() {
 }
 
 module.exports = {
+  initializeDatabase,
   testConnection,
   createUser, getUserByUsername, getUserByEmail, getUserById, getAllUsers,
   saveVisualization, getVisualization, getRecentVisualizations, getVisualizationsByUser,

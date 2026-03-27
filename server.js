@@ -8,6 +8,7 @@ const jwt      = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const path     = require('path');
 const {
+  initializeDatabase,
   testConnection,
   createUser, getUserByUsername, getUserByEmail, getUserById, getAllUsers,
   saveVisualization, getVisualization, getRecentVisualizations, getVisualizationsByUser,
@@ -290,6 +291,7 @@ app.get('*',          (_, res) => res.sendFile(path.join(__dirname, 'public', 'i
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 (async () => {
+  await initializeDatabase();
   await testConnection();
   app.listen(PORT, () => {
     console.log(`\n  ◈  AlgoScope running on http://localhost:${PORT}`);

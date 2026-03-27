@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AlgoScope — SQL Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#030712;color:#e2e8f0;font-family:'JetBrains Mono',monospace}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:10px}
+
+/* Background */
+.bg-mesh{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.bg-mesh::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 70%,rgba(99,102,241,0.06) 0%,transparent 50%),radial-gradient(ellipse at 70% 30%,rgba(6,182,212,0.04) 0%,transparent 50%);animation:meshMove 20s ease-in-out infinite}
+@keyframes meshMove{0%,100%{transform:translate(0,0)}33%{transform:translate(2%,-1%)}66%{transform:translate(-1%,2%)}}
+
+/* Header */
+header{height:54px;padding:0 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(99,102,241,0.08);background:rgba(15,23,42,0.55);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);position:relative;z-index:10}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.2) 30%,rgba(6,182,212,0.2) 70%,transparent)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 18px rgba(99,102,241,0.3),inset 0 1px 1px rgba(255,255,255,0.12)}
+.logo-text{font-family:'Inter',sans-serif;font-weight:800;font-size:16px;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:10px;color:#475569;margin-left:4px;font-weight:500}
+.nav-link{color:#64748b;font-size:11px;text-decoration:none;padding:5px 12px;border:1px solid rgba(255,255,255,0.05);border-radius:8px;transition:all .2s;font-weight:500}
+.nav-link:hover{color:#a5b4fc;border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.06)}
+
+/* Main layout */
+.main{display:grid;grid-template-columns:270px 1fr;height:calc(100vh - 54px);position:relative;z-index:1}
+
+/* Sidebar */
+.sidebar{border-right:1px solid rgba(99,102,241,0.06);display:flex;flex-direction:column;overflow:hidden;background:rgba(15,23,42,0.3);backdrop-filter:blur(12px)}
+.sidebar-head{padding:14px 16px;border-bottom:1px solid rgba(99,102,241,0.06);font-size:10px;color:#475569;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.schema-table{margin:10px 12px;border-radius:10px;overflow:hidden;border:1px solid rgba(139,92,246,0.12);background:rgba(15,23,42,0.3);transition:all .2s}
+.schema-table:hover{border-color:rgba(139,92,246,0.25);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.schema-tname{padding:7px 12px;background:rgba(139,92,246,0.06);font-size:11px;color:#a78bfa;font-weight:700;border-bottom:1px solid rgba(139,92,246,0.08)}
+.schema-col{padding:4px 12px;font-size:10px;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;font-weight:400}
+.schema-col:last-child{border-bottom:none}
+.schema-col span{color:#67e8f9;font-weight:600}
+
+/* Presets */
+.presets{padding:12px;border-top:1px solid rgba(99,102,241,0.06);margin-top:auto;background:rgba(15,23,42,0.2)}
+.presets-head{font-size:10px;color:#475569;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;font-weight:700}
+.preset{display:block;width:100%;text-align:left;background:none;border:1px solid rgba(255,255,255,0.04);color:#64748b;font-family:'JetBrains Mono',monospace;font-size:10px;padding:7px 10px;border-radius:8px;cursor:pointer;margin-bottom:5px;transition:all .2s;font-weight:500}
+.preset:hover{background:rgba(99,102,241,0.06);border-color:rgba(99,102,241,0.2);color:#a5b4fc;transform:translateX(2px)}
+
+/* Content area */
+.content{display:flex;flex-direction:column;overflow:hidden}
+.query-area{padding:16px 20px;border-bottom:1px solid rgba(99,102,241,0.06);background:rgba(15,23,42,0.3)}
+.query-label{font-size:10px;color:#475569;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;font-weight:700}
+textarea#sql-input{width:100%;background:rgba(3,7,18,0.6);border:1px solid rgba(99,102,241,0.1);color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;padding:12px 14px;border-radius:10px;outline:none;resize:vertical;min-height:78px;line-height:1.7;transition:all .25s}
+textarea#sql-input:focus{border-color:rgba(99,102,241,0.4);box-shadow:0 0 16px rgba(99,102,241,0.08)}
+.query-bar{display:flex;align-items:center;gap:10px;margin-top:10px}
+.btn-run{display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(6,182,212,0.1));border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;padding:7px 16px;border-radius:9px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;transition:all .25s;position:relative;overflow:hidden}
+.btn-run::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(6,182,212,0.14));opacity:0;transition:opacity .25s}
+.btn-run:hover{box-shadow:0 0 20px rgba(99,102,241,0.2);transform:translateY(-1px)}
+.btn-run:hover::before{opacity:1}
+.btn-run>*{position:relative;z-index:1}
+#row-count{font-size:11px;color:#475569;font-weight:500}
+#error-box{color:#f87171;font-size:11px;padding:8px 12px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:8px;display:none;margin-top:8px;font-weight:500}
+
+/* Results */
+.results{flex:1;overflow:auto;padding:16px 20px}
+#results-table{width:100%;border-collapse:collapse;font-size:12px}
+#results-table th{padding:8px 12px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.08);color:#a5b4fc;font-size:10px;letter-spacing:.08em;text-transform:uppercase;text-align:left;white-space:nowrap;font-weight:700}
+#results-table td{padding:8px 12px;border:1px solid rgba(255,255,255,0.03);color:#cbd5e1;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top;font-weight:400}
+#results-table tr:hover td{background:rgba(99,102,241,0.03)}
+.empty-state{display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;color:#374151;font-weight:400}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    <span class="logo-text">AlgoScope</span>
+    <span class="logo-sub">/ SQL Admin</span>
+  </div>
+  <a href="/" class="nav-link">← Back to Visualizer</a>
+</header>
+
+<div class="main">
+  <!-- Sidebar: schema -->
+  <div class="sidebar">
+    <div class="sidebar-head">Database Schema</div>
+    <div id="schema-area" style="flex:1;overflow:auto;padding:4px 0"></div>
+    <div class="presets">
+      <div class="presets-head">Quick Queries</div>
+      <button class="preset" onclick="runPreset('SELECT id, username, email, role, created_at FROM users ORDER BY created_at DESC;')">All users</button>
+      <button class="preset" onclick="runPreset('SELECT u.id, u.username, u.email, u.role, u.created_at, COUNT(v.id) as viz_count FROM users u LEFT JOIN visualizations v ON v.user_id = u.id GROUP BY u.id ORDER BY viz_count DESC;')">Users + viz count</button>
+      <button class="preset" onclick="runPreset('SELECT id, algorithm, data_structure, created_at FROM visualizations ORDER BY created_at DESC LIMIT 20;')">All visualizations</button>
+      <button class="preset" onclick="runPreset('SELECT algorithm, COUNT(*) as runs FROM visualizations GROUP BY algorithm ORDER BY runs DESC;')">Algorithm stats</button>
+      <button class="preset" onclick="runPreset('SELECT data_structure, COUNT(*) as count FROM visualizations GROUP BY data_structure ORDER BY count DESC;')">Data structure counts</button>
+      <button class="preset" onclick="runPreset('SELECT COUNT(*) as total_users FROM users;')">Total users</button>
+      <button class="preset" onclick="runPreset('SELECT COUNT(*) as total_viz FROM visualizations;')">Total visualizations</button>
+    </div>
+  </div>
+
+  <!-- Main: query + results -->
+  <div class="content">
+    <div class="query-area">
+      <div class="query-label">SQL Query (read-only)</div>
+      <textarea id="sql-input" spellcheck="false" placeholder="SELECT * FROM visualizations LIMIT 10;">SELECT id, algorithm, data_structure, created_at FROM visualizations ORDER BY created_at DESC LIMIT 20;</textarea>
+      <div class="query-bar">
+        <button class="btn-run" onclick="runQuery()"><span>▶</span> <span>Run Query</span></button>
+        <span id="row-count"></span>
+      </div>
+      <div id="error-box"></div>
+    </div>
+    <div class="results">
+      <div class="empty-state" id="empty-state">Run a query to see results</div>
+      <div id="table-wrap" style="display:none">
+        <table id="results-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadSchema() {
+  try {
+    const res = await fetch('/api/schema');
+    const schema = await res.json();
+    const area = document.getElementById('schema-area');
+    area.innerHTML = '';
+    for (const [table, cols] of Object.entries(schema)) {
+      const wrap = document.createElement('div');
+      wrap.className = 'schema-table';
+      wrap.innerHTML = `<div class="schema-tname">📋 ${table}</div>` +
+        cols.map(c => `<div class="schema-col">${c.Field || c.name} <span>${c.Type || c.type}</span></div>`).join('');
+      area.appendChild(wrap);
+    }
+  } catch (e) { console.error(e); }
+}
+
+async function runQuery() {
+  const query = document.getElementById('sql-input').value.trim();
+  if (!query) return;
+  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('row-count').textContent = 'running...';
+
+  try {
+    const res  = await fetch('/api/sql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById('error-box').textContent = data.error;
+      document.getElementById('error-box').style.display = 'block';
+      document.getElementById('row-count').textContent = '';
+      return;
+    }
+    renderTable(data.rows);
+    document.getElementById('row-count').textContent = `${data.count} row${data.count !== 1 ? 's' : ''}`;
+  } catch (e) {
+    document.getElementById('error-box').textContent = e.message;
+    document.getElementById('error-box').style.display = 'block';
+    document.getElementById('row-count').textContent = '';
+  }
+}
+
+function renderTable(rows) {
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('table-wrap').style.display = 'block';
+  const thead = document.getElementById('thead');
+  const tbody = document.getElementById('tbody');
+  thead.innerHTML = ''; tbody.innerHTML = '';
+  if (!rows.length) {
+    document.getElementById('empty-state').textContent = 'Query returned 0 rows.';
+    document.getElementById('empty-state').style.display = 'flex';
+    document.getElementById('table-wrap').style.display = 'none';
+    return;
+  }
+  const cols = Object.keys(rows[0]);
+  thead.innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  tbody.innerHTML = rows.map(r =>
+    '<tr>' + cols.map(c => `<td title="${esc(String(r[c] ?? ''))}">${esc(String(r[c] ?? 'null'))}</td>`).join('') + '</tr>'
+  ).join('');
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function runPreset(q) {
+  document.getElementById('sql-input').value = q;
+  runQuery();
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runQuery();
+});
+
+loadSchema();
+runQuery();
+</script>
+</body>
+</html>

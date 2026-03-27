@@ -1,0 +1,24 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+
+dist/
+build/
+coverage/
+
+# Local data / artifacts (don’t commit)
+*.db
+*.db-*
+mysql_data/

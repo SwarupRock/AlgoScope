@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AlgoScope — My Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:10px}
+
+/* Background */
+.bg-mesh{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.bg-mesh::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,0.07) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(6,182,212,0.05) 0%,transparent 50%);animation:meshMove 20s ease-in-out infinite}
+@keyframes meshMove{0%,100%{transform:translate(0,0)}33%{transform:translate(2%,-1%)}66%{transform:translate(-1%,2%)}}
+.bg-grid{position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(99,102,241,0.03) 1px,transparent 1px);background-size:32px 32px;z-index:0}
+
+/* Header */
+header{height:58px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(99,102,241,0.08);background:rgba(15,23,42,0.55);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);position:sticky;top:0;z-index:10}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.2) 30%,rgba(6,182,212,0.2) 70%,transparent)}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none}
+.logo-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 20px rgba(99,102,241,0.3),inset 0 1px 1px rgba(255,255,255,0.15);transition:transform .3s}
+.logo-icon:hover{transform:scale(1.08) rotate(5deg)}
+.logo-text{font-weight:800;font-size:18px;letter-spacing:-.5px;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav{display:flex;gap:8px;align-items:center}
+.nav a,.nav button{font-family:'JetBrains Mono',monospace;font-size:11px;text-decoration:none;padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);transition:all .2s;cursor:pointer;background:none;color:#64748b;font-weight:500}
+.nav a:hover,.nav button:hover{color:#a5b4fc;border-color:rgba(99,102,241,0.25);background:rgba(99,102,241,0.06)}
+.nav .active{background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(6,182,212,0.08));border-color:rgba(99,102,241,0.2);color:#a5b4fc}
+.user-chip{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(6,182,212,0.06));border:1px solid rgba(99,102,241,0.18);border-radius:20px;padding:4px 14px;font-size:11px;color:#a5b4fc;font-family:'JetBrains Mono',monospace;font-weight:600}
+
+/* Container */
+.container{max-width:920px;margin:0 auto;padding:32px 28px;position:relative;z-index:1}
+.hero{margin-bottom:32px}
+.hero h1{font-weight:800;font-size:28px;letter-spacing:-.5px;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:12px;color:#475569;font-family:'JetBrains Mono',monospace;margin-top:6px;font-weight:400}
+
+/* Stats */
+.stats{display:flex;gap:14px;margin-bottom:32px}
+.stat{background:rgba(15,23,42,0.5);border:1px solid rgba(99,102,241,0.08);border-radius:14px;padding:18px 22px;flex:1;backdrop-filter:blur(12px);transition:all .3s;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.15),transparent)}
+.stat:hover{border-color:rgba(99,102,241,0.2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.stat-val{font-weight:800;font-size:32px;background:linear-gradient(135deg,#a5b4fc,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:10px;color:#475569;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;margin-top:4px;font-weight:600}
+
+/* Section */
+.section-head{font-size:11px;color:#475569;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(99,102,241,0.06);font-weight:600}
+
+/* Viz list */
+.viz-list{display:flex;flex-direction:column;gap:8px}
+.viz-item{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(15,23,42,0.4);border:1px solid rgba(255,255,255,0.04);border-radius:12px;cursor:pointer;transition:all .25s;text-decoration:none;backdrop-filter:blur(8px)}
+.viz-item:hover{background:rgba(99,102,241,0.05);border-color:rgba(99,102,241,0.15);transform:translateX(4px);box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.viz-left{display:flex;flex-direction:column;gap:4px}
+.viz-algo{font-family:'JetBrains Mono',monospace;font-size:13px;color:#e2e8f0;font-weight:600}
+.viz-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;display:flex;gap:12px;font-weight:400}
+.viz-ds{background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.15);color:#a78bfa;padding:3px 10px;border-radius:16px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
+.viz-open{font-family:'JetBrains Mono',monospace;font-size:10px;color:#a5b4fc;border:1px solid rgba(99,102,241,0.2);padding:5px 12px;border-radius:8px;opacity:0;transition:all .2s;font-weight:600}
+.viz-item:hover .viz-open{opacity:1}
+.empty{text-align:center;padding:48px 24px;color:#374151;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:400}
+.empty a{color:#a5b4fc;text-decoration:none;font-weight:600}
+.empty a:hover{text-decoration:underline}
+
+@keyframes fadein{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.fadein{animation:fadein .35s cubic-bezier(0.16,1,0.3,1)}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+
+<header>
+  <a href="/" class="logo">
+    <div class="logo-icon">◈</div>
+    <span class="logo-text">AlgoScope</span>
+  </a>
+  <div class="nav">
+    <a href="/">Visualizer</a>
+    <a href="/dashboard" class="active">Dashboard</a>
+    <a href="/admin">Admin</a>
+    <div class="user-chip">👤 <span id="user-name"></span></div>
+    <button onclick="doLogout()">logout</button>
+  </div>
+</header>
+
+<div class="container fadein">
+  <div class="hero">
+    <h1>My Dashboard</h1>
+    <p id="user-info">Loading...</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" id="stat-total">—</div>
+      <div class="stat-label">Visualizations</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-ds">—</div>
+      <div class="stat-label">Data Structures</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-since">—</div>
+      <div class="stat-label">Member Since</div>
+    </div>
+  </div>
+
+  <div class="section-head">Visualization History</div>
+  <div class="viz-list" id="viz-list">
+    <div class="empty">Loading history...</div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('algo_token');
+if (!token) { window.location.href = '/login'; }
+
+async function loadDashboard() {
+  try {
+    const meRes = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+    if (!meRes.ok) { localStorage.removeItem('algo_token'); window.location.href = '/login'; return; }
+    const user = await meRes.json();
+    document.getElementById('user-name').textContent = user.username;
+    document.getElementById('user-info').textContent = `${user.username} · ${user.email}`;
+    const since = new Date(user.created_at);
+    document.getElementById('stat-since').textContent = since.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+    const vizRes = await fetch('/api/auth/my-visualizations', { headers: { Authorization: `Bearer ${token}` } });
+    const vizzes = await vizRes.json();
+    document.getElementById('stat-total').textContent = vizzes.length;
+    const uniqueDS = new Set(vizzes.map(v => v.data_structure).filter(Boolean));
+    document.getElementById('stat-ds').textContent = uniqueDS.size;
+
+    const list = document.getElementById('viz-list');
+    if (!vizzes.length) {
+      list.innerHTML = '<div class="empty">No visualizations yet. <a href="/">Go create one →</a></div>';
+      return;
+    }
+    list.innerHTML = vizzes.map(v => {
+      const date = new Date(v.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return `<a class="viz-item" href="/?share=${v.id}">
+        <div class="viz-left">
+          <div class="viz-algo">${esc(v.algorithm || 'Visualization')}</div>
+          <div class="viz-meta"><span>${date}</span><span>${esc(v.id.slice(0,8))}…</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${v.data_structure ? `<span class="viz-ds">${esc(v.data_structure)}</span>` : ''}
+          <span class="viz-open">open →</span>
+        </div>
+      </a>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('viz-list').innerHTML = `<div class="empty">Error loading data: ${esc(e.message)}</div>`;
+  }
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function doLogout() {
+  localStorage.removeItem('algo_token');
+  localStorage.removeItem('algo_user');
+  window.location.href = '/login';
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

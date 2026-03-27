@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AlgoScope — Java Data Structure Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;overflow:hidden}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:rgba(99,102,241,0.5)}
+
+/* ── Animated background ───────────────────────────────────────────── */
+.bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-mesh::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(6,182,212,0.06) 0%,transparent 50%),radial-gradient(ellipse at 40% 80%,rgba(139,92,246,0.05) 0%,transparent 50%);animation:meshMove 20s ease-in-out infinite}
+@keyframes meshMove{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(2%,-1%) rotate(1deg)}66%{transform:translate(-1%,2%) rotate(-1deg)}}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(rgba(99,102,241,0.035) 1px,transparent 1px);background-size:32px 32px}
+
+/* ── Root layout ───────────────────────────────────────────────────── */
+#root{height:100vh;display:flex;flex-direction:column;overflow:hidden;position:relative;z-index:1}
+
+/* ── Glass utility ─────────────────────────────────────────────────── */
+.glass{background:rgba(15,23,42,0.55);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.glass-strong{background:rgba(15,23,42,0.75);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px)}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+header{height:56px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:20;border-bottom:1px solid rgba(99,102,241,0.08)}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.2) 30%,rgba(6,182,212,0.2) 70%,transparent)}
+.logo-group{display:flex;align-items:center;gap:12px}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 24px rgba(99,102,241,0.35),inset 0 1px 1px rgba(255,255,255,0.15);transition:transform .3s,box-shadow .3s}
+.logo-mark:hover{transform:scale(1.08) rotate(5deg);box-shadow:0 0 32px rgba(99,102,241,0.5)}
+.logo-title{font-weight:800;font-size:18px;letter-spacing:-.5px;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-ver{font-size:9px;color:rgba(99,102,241,0.5);font-family:'JetBrains Mono',monospace;font-weight:600;padding:1px 6px;border:1px solid rgba(99,102,241,0.15);border-radius:20px;margin-left:-2px}
+.header-right{display:flex;gap:8px;align-items:center}
+
+/* ── Badge ─────────────────────────────────────────────────────────── */
+.badge{display:none;align-items:center;gap:7px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:20px;padding:3px 12px;font-size:11px;color:#818cf8;font-family:'JetBrains Mono',monospace;font-weight:600}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 2s infinite}
+
+/* ── User chip / nav ───────────────────────────────────────────────── */
+.user-chip{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(6,182,212,0.08));border:1px solid rgba(99,102,241,0.2);border-radius:24px;padding:4px 14px 4px 8px;font-size:12px;color:#a5b4fc;font-family:'JetBrains Mono',monospace;font-weight:600;transition:all .2s}
+.user-chip:hover{border-color:rgba(99,102,241,0.4);box-shadow:0 0 16px rgba(99,102,241,0.15)}
+.user-avatar{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700}
+.nav-link{font-size:11px;color:#64748b;font-family:'JetBrains Mono',monospace;text-decoration:none;border:1px solid rgba(255,255,255,0.05);padding:5px 10px;border-radius:8px;transition:all .2s;font-weight:500}
+.nav-link:hover{color:#a5b4fc;border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.06)}
+.btn-logout{background:none;border:1px solid rgba(255,255,255,0.05);color:#475569;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;transition:all .2s}
+.btn-logout:hover{color:#f87171;border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.05)}
+
+/* ── Share button ──────────────────────────────────────────────────── */
+.btn-share{display:flex;align-items:center;gap:6px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);color:#a78bfa;padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;transition:all .25s}
+.btn-share:hover:not(:disabled){background:rgba(139,92,246,0.15);box-shadow:0 0 20px rgba(139,92,246,0.2);transform:translateY(-1px)}
+.btn-share:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── Examples button / dropdown ────────────────────────────────────── */
+.btn-examples{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:#64748b;padding:5px 14px;border-radius:8px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;transition:all .2s}
+.btn-examples:hover{color:#a5b4fc;border-color:rgba(99,102,241,0.25);background:rgba(99,102,241,0.06)}
+#examples-menu{display:none;position:absolute;top:calc(100% + 8px);right:0;width:260px;background:rgba(15,23,42,0.95);border:1px solid rgba(99,102,241,0.12);border-radius:14px;padding:6px;z-index:100;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 1px rgba(99,102,241,0.3);backdrop-filter:blur(20px)}
+.example-item{padding:9px 14px;cursor:pointer;border-radius:8px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#64748b;transition:all .15s;border:1px solid transparent;background:none;width:100%;text-align:left;font-weight:500}
+.example-item:hover{background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.15);color:#a5b4fc}
+
+/* ── Run button ────────────────────────────────────────────────────── */
+.btn-run{display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(6,182,212,0.1));border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;padding:7px 16px;border-radius:9px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.02em;transition:all .25s;position:relative;overflow:hidden}
+.btn-run::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,182,212,0.12));opacity:0;transition:opacity .25s}
+.btn-run:hover:not(:disabled){box-shadow:0 0 24px rgba(99,102,241,0.25),0 4px 16px rgba(0,0,0,.2);transform:translateY(-1px)}
+.btn-run:hover:not(:disabled)::before{opacity:1}
+.btn-run:disabled{opacity:.45;cursor:wait}
+.btn-run>*{position:relative;z-index:1}
+
+/* ── Panels ────────────────────────────────────────────────────────── */
+.panel-border{border-right:1px solid rgba(99,102,241,0.06)}
+.panel-top-border{border-bottom:1px solid rgba(99,102,241,0.06)}
+
+/* ── Editor panel ──────────────────────────────────────────────────── */
+.editor-toolbar{padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.editor-dots{display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;transition:transform .2s,box-shadow .2s}
+.dot:hover{transform:scale(1.2)}
+.dot-r{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.3)}
+.dot-y{background:#eab308;box-shadow:0 0 8px rgba(234,179,8,0.3)}
+.dot-g{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,0.3)}
+.editor-filename{margin-left:10px;font-size:12px;color:#475569;font-family:'JetBrains Mono',monospace;font-weight:500}
+
+/* ── Tab buttons ───────────────────────────────────────────────────── */
+.tabs-group{display:flex;gap:2px;background:rgba(255,255,255,0.03);border-radius:10px;padding:3px}
+.tab-btn{padding:5px 14px;border-radius:8px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.02em;transition:all .2s}
+.tab-btn.on{background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,182,212,0.1));color:#a5b4fc;box-shadow:0 2px 8px rgba(99,102,241,0.1)}
+.tab-btn.off{background:transparent;color:#475569}
+.tab-btn.off:hover{color:#64748b;background:rgba(255,255,255,0.02)}
+
+/* ── Playback controls ─────────────────────────────────────────────── */
+.btn-ctrl{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:#475569;border-radius:8px;cursor:pointer;font-size:12px;transition:all .2s}
+.btn-ctrl:hover:not(:disabled){background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.25);color:#a5b4fc;box-shadow:0 0 12px rgba(99,102,241,0.1)}
+.btn-ctrl:disabled{opacity:.2;cursor:not-allowed}
+.btn-ctrl.active{background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,182,212,0.1));border-color:rgba(99,102,241,0.35);color:#a5b4fc;box-shadow:0 0 14px rgba(99,102,241,0.15)}
+
+/* ── Visualization area ────────────────────────────────────────────── */
+.viz-canvas{flex:1;overflow:auto;position:relative;background-image:radial-gradient(rgba(99,102,241,0.02) 1px,transparent 1px);background-size:28px 28px}
+.viz-inner{display:flex;align-items:center;justify-content:center;min-height:100%;padding:24px 20px}
+#step-desc{padding:12px 18px;border-bottom:1px solid rgba(99,102,241,0.06);flex-shrink:0;background:rgba(15,23,42,0.3)}
+
+/* ── Timeline ──────────────────────────────────────────────────────── */
+#timeline{height:52px;border-top:1px solid rgba(99,102,241,0.06);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;position:relative;margin-bottom:2px}
+#timeline::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.15) 30%,rgba(6,182,212,0.15) 70%,transparent)}
+.progress-track{flex:1;height:4px;background:rgba(255,255,255,0.04);border-radius:4px;cursor:pointer;position:relative}
+.progress-fill{height:100%;background:linear-gradient(90deg,#6366f1,#06b6d4);border-radius:4px;pointer-events:none;transition:width .25s ease;box-shadow:0 0 8px rgba(99,102,241,0.3)}
+.progress-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:linear-gradient(135deg,#6366f1,#06b6d4);border:2px solid rgba(255,255,255,0.9);border-radius:50%;box-shadow:0 0 14px rgba(99,102,241,.5);pointer-events:none;transition:left .25s ease}
+
+/* ── Memory view ───────────────────────────────────────────────────── */
+.mem-frame{margin-bottom:10px;border-radius:10px;overflow:hidden;border:1px solid rgba(139,92,246,0.15);background:rgba(15,23,42,0.3)}
+.mem-frame-hdr{padding:6px 12px;background:rgba(139,92,246,0.06);border-bottom:1px solid rgba(139,92,246,0.08);font-family:'JetBrains Mono',monospace;font-size:11px;color:#a78bfa;font-weight:600}
+.mem-obj{margin-bottom:10px;border-radius:10px;overflow:hidden}
+.mem-obj.hl{border:1px solid rgba(99,102,241,0.3);box-shadow:0 0 12px rgba(99,102,241,0.08)}
+.mem-obj.nhl{border:1px solid rgba(30,41,59,0.5)}
+.mem-obj-hdr{padding:5px 12px;border-bottom:1px solid rgba(30,41,59,0.3);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px}
+.kv{display:flex;gap:7px;padding:2px 0;font-family:'JetBrains Mono',monospace;font-size:11px}
+
+/* ── Toast ─────────────────────────────────────────────────────────── */
+#toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.9);border:1px solid rgba(139,92,246,0.35);color:#a78bfa;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:10px 22px;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 20px rgba(139,92,246,0.15);display:none;z-index:9999;animation:slideup .3s ease;backdrop-filter:blur(16px)}
+
+/* ── Shared banner ─────────────────────────────────────────────────── */
+#shared-banner{display:none;align-items:center;justify-content:center;gap:10px;padding:8px 16px;background:rgba(139,92,246,0.06);border-bottom:1px solid rgba(139,92,246,0.12);font-family:'JetBrains Mono',monospace;font-size:12px;color:#a78bfa;flex-shrink:0}
+
+/* ── Empty state chips ─────────────────────────────────────────────── */
+.empty-chip{padding:5px 12px;border:1px solid rgba(99,102,241,0.12);border-radius:20px;font-size:11px;background:rgba(99,102,241,0.04);color:#64748b;cursor:pointer;font-family:'JetBrains Mono',monospace;font-weight:500;transition:all .2s;width:auto;text-align:left}
+.empty-chip:hover{background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.25);color:#a5b4fc;transform:translateY(-1px)}
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes fadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideup{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(99,102,241,0.2)}50%{box-shadow:0 0 40px rgba(99,102,241,0.4)}}
+.spin{animation:spin .9s linear infinite}
+.pulse{animation:pulse 2s infinite}
+.fadein{animation:fadein .25s ease}
+
+/* ── Algorithm explanation tab ────────────────────────────────────── */
+#algo-content{display:none;flex:1;overflow:auto;padding:24px}
+.algo-card{background:rgba(15,23,42,0.4);border:1px solid rgba(99,102,241,0.1);border-radius:14px;padding:20px 24px;margin-bottom:16px;backdrop-filter:blur(8px)}
+.algo-card h3{font-family:'Inter',sans-serif;font-weight:700;font-size:15px;color:#e2e8f0;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.algo-card h3 span{font-size:13px}
+.algo-desc{font-size:13px;color:#94a3b8;line-height:1.65;margin-bottom:14px;font-family:'Inter',sans-serif;font-weight:400}
+.complexity-row{display:flex;gap:10px;margin-bottom:14px}
+.complexity-badge{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+.complexity-badge.time{background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);color:#a5b4fc}
+.complexity-badge.space{background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);color:#67e8f9}
+.pseudo-list{list-style:none;padding:0}
+.pseudo-list li{padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#94a3b8;border-left:2px solid rgba(99,102,241,0.2);margin-bottom:4px;transition:all .2s;font-weight:400}
+.pseudo-list li:hover{background:rgba(99,102,241,0.04);color:#a5b4fc;border-color:#6366f1}
+
+/* ── Multi-algorithm selector ─────────────────────────────────────── */
+#algo-selector{display:none;padding:6px 14px;border-bottom:1px solid rgba(99,102,241,0.06);flex-shrink:0}
+.algo-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.algo-tab{padding:5px 14px;border-radius:20px;border:1px solid rgba(99,102,241,0.15);background:rgba(99,102,241,0.04);color:#64748b;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.algo-tab.active{background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,182,212,0.1));border-color:rgba(99,102,241,0.3);color:#a5b4fc;box-shadow:0 2px 8px rgba(99,102,241,0.1)}
+.algo-tab:hover:not(.active){background:rgba(99,102,241,0.08);color:#a5b4fc}
+</style>
+</head>
+<body>
+
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+
+<!-- Shared banner -->
+<div id="shared-banner">
+  <span>🔗</span>
+  <span>Shared visualization — read only</span>
+  <span id="shared-algo" style="color:#a5b4fc"></span>
+  <a href="/" style="color:#64748b;margin-left:8px;font-weight:500">← open editor</a>
+</div>
+
+<div id="root">
+  <!-- Header -->
+  <header class="glass">
+    <div class="logo-group">
+      <div class="logo-mark">◈</div>
+      <span class="logo-title">AlgoScope</span>
+      <span class="logo-ver">v2.0</span>
+    </div>
+    <div class="header-right">
+      <div id="algo-badge" class="badge">
+        <span class="badge-dot"></span>
+        <span id="badge-text"></span>
+      </div>
+      <div id="user-info" style="display:none;align-items:center;gap:7px">
+        <div class="user-chip">
+          <div class="user-avatar">👤</div>
+          <span id="user-name-label"></span>
+        </div>
+        <a href="/dashboard" class="nav-link">📊 History</a>
+        <a href="/admin" class="nav-link">⚙ Admin</a>
+        <button class="btn-logout" onclick="doLogout()">logout</button>
+      </div>
+      <a id="login-link" href="/login" class="nav-link" style="display:none">Login</a>
+      <button id="share-btn" class="btn-share" onclick="shareVisualization()" disabled title="Run a visualization first">
+        🔗 Share
+      </button>
+      <div style="position:relative">
+        <button onclick="toggleExamples()" class="btn-examples">
+          examples ▾
+        </button>
+        <div id="examples-menu" class="fadein">
+          <button class="example-item" onclick="loadExample('Create Your Own')" style="color:#a5b4fc;border-bottom:1px solid rgba(99,102,241,0.08);margin-bottom:4px;padding-bottom:10px">✏️ Add Your Own Code</button>
+          <button class="example-item" onclick="loadExample('Linked List')">🔗 Linked List — Insert at Head</button>
+          <button class="example-item" onclick="loadExample('BST')">🌳 Binary Search Tree — Insert</button>
+          <button class="example-item" onclick="loadExample('Bubble Sort')">🫧 Bubble Sort</button>
+          <button class="example-item" onclick="loadExample('Stack')">📚 Stack — Push/Pop</button>
+          <button class="example-item" onclick="loadExample('Graph BFS')">🕸 Graph — BFS Traversal</button>
+          <button class="example-item" onclick="loadExample('Queue')">🚶 Queue — Enqueue/Dequeue</button>
+          <button class="example-item" onclick="loadExample('Merge Sort')">⚡ Merge Sort</button>
+          <button class="example-item" onclick="loadExample('Fibonacci')">🔢 Fibonacci — Recursion Stack</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <div style="flex:1;display:flex;overflow:hidden;min-height:0">
+    <!-- Left: Editor -->
+    <div class="panel-border" id="editor-panel" style="width:46%;display:flex;flex-direction:column;min-width:0">
+      <div class="glass panel-top-border editor-toolbar">
+        <div class="editor-dots">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <span class="editor-filename">Main.java</span>
+        </div>
+        <button id="run-btn" class="btn-run" onclick="runVisualization()">
+          <svg id="run-icon" width="12" height="12" viewBox="0 0 12 12"><polygon points="2,1 11,6 2,11" fill="currentColor"/></svg>
+          <span id="run-label">Run Visualization</span>
+        </button>
+      </div>
+      <div id="editor-container" style="flex:1;overflow:hidden;position:relative"></div>
+      <textarea id="editor-fallback" style="display:none;flex:1;background:#030712;color:#cbd5e1;border:none;outline:none;padding:16px;font-family:'JetBrains Mono',monospace;font-size:13px;resize:none;line-height:1.7"></textarea>
+    </div>
+
+    <!-- Right: Viz -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;background:rgba(3,7,18,0.3)">
+      <div class="glass panel-top-border" style="padding:7px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+        <div class="tabs-group">
+          <button class="tab-btn on" id="tab-viz" onclick="switchTab('viz')">⬡ Visualization</button>
+          <button class="tab-btn off" id="tab-mem" onclick="switchTab('mem')">⚙ Memory</button>
+          <button class="tab-btn off" id="tab-algo" onclick="switchTab('algo')">📝 Algorithm</button>
+        </div>
+        <span id="line-indicator" style="font-size:10px;color:#374151;font-family:'JetBrains Mono',monospace;font-weight:500"></span>
+      </div>
+
+      <div id="step-desc" style="display:none">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div id="step-num" style="width:24px;height:24px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,182,212,0.1));border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;color:#a5b4fc;font-family:'JetBrains Mono',monospace;font-weight:700">1</div>
+          <div id="step-text" style="font-size:13px;color:#94a3b8;line-height:1.55;padding-top:2px;font-weight:400"></div>
+        </div>
+      </div>
+
+      <!-- Multi-algorithm selector -->
+      <div id="algo-selector">
+        <div class="algo-tabs" id="algo-tabs-bar"></div>
+      </div>
+
+      <div id="viz-content" class="viz-canvas">
+        <div id="empty-state" class="viz-inner" style="flex-direction:column;gap:22px">
+          <div style="position:relative">
+            <div style="font-size:56px;opacity:.06;color:#6366f1;line-height:1;filter:blur(0.5px)">◈</div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;opacity:.03;color:#06b6d4;line-height:1;transform:rotate(45deg)">◈</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:14px;color:#374151;font-family:'JetBrains Mono',monospace;font-weight:500">paste java code → run visualization</div>
+            <div style="font-size:11px;color:#1f2937;font-family:'JetBrains Mono',monospace;margin-top:6px;font-weight:400">powered by Qwen3 9B via Ollama</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:380px">
+            <button onclick="loadExample('Linked List')" class="empty-chip">Linked List</button>
+            <button onclick="loadExample('BST')" class="empty-chip">BST</button>
+            <button onclick="loadExample('Bubble Sort')" class="empty-chip">Bubble Sort</button>
+            <button onclick="loadExample('Stack')" class="empty-chip">Stack</button>
+            <button onclick="loadExample('Merge Sort')" class="empty-chip">Merge Sort</button>
+          </div>
+        </div>
+        <div id="loading-state" class="viz-inner" style="display:none;flex-direction:column;gap:16px">
+          <div style="position:relative;width:58px;height:58px">
+            <svg class="spin" style="position:absolute;inset:0" width="58" height="58" viewBox="0 0 58 58" fill="none">
+              <circle cx="29" cy="29" r="24" stroke="rgba(99,102,241,0.1)" stroke-width="3"/>
+              <circle cx="29" cy="29" r="24" stroke="url(#spinner-grad)" stroke-width="3" stroke-dasharray="38 108" stroke-linecap="round"/>
+              <defs><linearGradient id="spinner-grad" x1="0" y1="0" x2="58" y2="58"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:#6366f1">◈</div>
+          </div>
+          <div style="color:#374151;font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:500" id="loading-msg">AI is thinking & analyzing code...</div>
+        </div>
+        <div id="error-state" class="viz-inner" style="display:none">
+          <div style="padding:16px 20px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:12px;color:#f87171;font-size:12px;font-family:'JetBrains Mono',monospace;max-width:420px;line-height:1.7;backdrop-filter:blur(8px)">
+            <div style="margin-bottom:6px;font-weight:700;font-size:13px">// error</div>
+            <div id="error-msg"></div>
+          </div>
+        </div>
+        <div id="viz-display" class="viz-inner" style="display:none">
+          <div id="viz-svg-container" style="width:100%;max-width:640px"></div>
+        </div>
+      </div>
+
+      <div id="mem-content" style="display:none;flex:1;overflow:auto;padding:16px">
+        <div style="display:flex;gap:14px;min-height:100%">
+          <div style="flex:1;min-width:0" id="mem-stack-col"></div>
+          <div style="flex:1;min-width:0" id="mem-heap-col"></div>
+        </div>
+      </div>
+
+      <!-- Algorithm explanation tab -->
+      <div id="algo-content">
+        <div id="algo-explanation"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div id="timeline" class="glass-strong">
+    <div style="display:flex;gap:4px;align-items:center">
+      <button class="btn-ctrl" id="btn-start" onclick="goStart()" style="width:26px;height:26px" title="Go to start">⏮</button>
+      <button class="btn-ctrl" id="btn-back" onclick="stepBack()" style="width:26px;height:26px" title="Step back">⏴</button>
+      <button class="btn-ctrl" id="btn-play" onclick="togglePlay()" style="width:34px;height:34px;font-size:14px" title="Play/Pause">▶</button>
+      <button class="btn-ctrl" id="btn-fwd" onclick="stepFwd()" style="width:26px;height:26px" title="Step forward">⏵</button>
+      <button class="btn-ctrl" id="btn-end" onclick="goEnd()" style="width:26px;height:26px" title="Go to end">⏭</button>
+    </div>
+    <div class="progress-track" id="progress-track" onclick="seekTo(event)">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      <div id="step-markers"></div>
+      <div class="progress-thumb" id="progress-thumb" style="left:0%;display:none"></div>
+    </div>
+    <div id="step-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#475569;min-width:50px;text-align:center;font-weight:600">—/—</div>
+    <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
+      <span style="font-size:10px;color:#374151;font-family:'JetBrains Mono',monospace;font-weight:500">spd</span>
+      <input type="range" id="speed-slider" min="0.5" max="3" step="0.5" value="1" style="width:72px;accent-color:#6366f1;cursor:pointer" oninput="updateSpeed(this.value)">
+      <span id="speed-label" style="font-size:11px;color:#475569;font-family:'JetBrains Mono',monospace;min-width:22px;font-weight:600">1×</span>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast">🔗 Link copied to clipboard!</div>
+
+<script src="app.js"></script>
+</body>
+</html>

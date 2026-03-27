@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AlgoScope — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;overflow:hidden}
+
+/* Background effects */
+.bg-mesh{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.bg-mesh::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 40%,rgba(99,102,241,0.1) 0%,transparent 50%),radial-gradient(ellipse at 70% 60%,rgba(6,182,212,0.08) 0%,transparent 50%),radial-gradient(ellipse at 50% 20%,rgba(139,92,246,0.06) 0%,transparent 50%);animation:meshMove 25s ease-in-out infinite}
+@keyframes meshMove{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(3%,-2%) rotate(1.5deg)}66%{transform:translate(-2%,3%) rotate(-1deg)}}
+.bg-grid{position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(99,102,241,0.03) 1px,transparent 1px);background-size:32px 32px}
+.bg-glow-top{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:500px;background:radial-gradient(ellipse,rgba(99,102,241,0.1),rgba(6,182,212,0.05) 40%,transparent 70%);pointer-events:none}
+
+.page{height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+
+.card{background:rgba(15,23,42,0.7);border:1px solid rgba(99,102,241,0.12);border-radius:22px;padding:40px 38px;width:min(430px,92vw);box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 1px rgba(99,102,241,0.3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.25) 30%,rgba(6,182,212,0.2) 70%,transparent)}
+.card::after{content:'';position:absolute;inset:0;border-radius:22px;pointer-events:none;background:linear-gradient(135deg,rgba(99,102,241,0.03),transparent 40%)}
+
+.logo{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.logo-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 0 28px rgba(99,102,241,0.35),inset 0 1px 1px rgba(255,255,255,0.15);transition:transform .3s}
+.logo-icon:hover{transform:scale(1.08) rotate(5deg)}
+.logo-text{font-weight:800;font-size:26px;letter-spacing:-.5px;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.subtitle{font-size:12px;color:#475569;font-family:'JetBrains Mono',monospace;margin-bottom:28px;margin-top:5px;font-weight:400}
+
+.tabs{display:flex;gap:4px;margin-bottom:24px;background:rgba(255,255,255,0.03);border-radius:12px;padding:4px;border:1px solid rgba(255,255,255,0.04)}
+.tab{flex:1;padding:9px;border:none;border-radius:9px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;transition:all .2s}
+.tab.on{background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,182,212,0.1));color:#a5b4fc;box-shadow:0 2px 8px rgba(99,102,241,0.1)}
+.tab.off{background:none;color:#475569}
+.tab.off:hover{color:#64748b}
+
+.field{width:100%;background:rgba(3,7,18,0.6);border:1px solid rgba(99,102,241,0.1);color:#e2e8f0;padding:13px 16px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:400;outline:none;margin-bottom:14px;transition:all .25s}
+.field:focus{border-color:rgba(99,102,241,0.4);box-shadow:0 0 16px rgba(99,102,241,0.08),inset 0 0 0 1px rgba(99,102,241,0.05)}
+.field::placeholder{color:#334155}
+
+.submit{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(6,182,212,0.12));border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;padding:12px 16px;border-radius:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;transition:all .3s;margin-top:8px;position:relative;overflow:hidden}
+.submit::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(6,182,212,0.15));opacity:0;transition:opacity .25s}
+.submit:hover:not(:disabled){box-shadow:0 0 28px rgba(99,102,241,0.25),0 8px 24px rgba(0,0,0,.3);transform:translateY(-1px)}
+.submit:hover:not(:disabled)::before{opacity:1}
+.submit:disabled{opacity:.45;cursor:wait}
+.submit>*{position:relative;z-index:1}
+
+.err{color:#f87171;font-size:11px;font-family:'JetBrains Mono',monospace;margin-top:10px;display:none;padding:8px 12px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.12);border-radius:8px;font-weight:500}
+
+.guest{display:block;text-align:center;margin-top:20px;font-size:12px;color:#475569;font-family:'JetBrains Mono',monospace;cursor:pointer;text-decoration:none;transition:all .2s;font-weight:500}
+.guest:hover{color:#a5b4fc}
+
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,0.1),transparent);margin:20px 0}
+
+.footer{text-align:center;font-size:10px;color:#334155;font-family:'JetBrains Mono',monospace;font-weight:400}
+
+@keyframes fadein{from{opacity:0;transform:translateY(-12px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.fadein{animation:fadein .4s cubic-bezier(0.16,1,0.3,1)}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+<div class="bg-glow-top"></div>
+
+<div class="page">
+<div class="card fadein">
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    <span class="logo-text">AlgoScope</span>
+  </div>
+  <div class="subtitle">Java Data Structure Visualizer — powered by Qwen3 AI</div>
+  <div class="tabs">
+    <button class="tab on" id="tab-login" onclick="switchTab('login')">Login</button>
+    <button class="tab off" id="tab-register" onclick="switchTab('register')">Create Account</button>
+  </div>
+
+  <!-- Login Form -->
+  <form id="form-login" onsubmit="doLogin(event)">
+    <input class="field" id="login-user" type="text" placeholder="Username" autocomplete="username" required/>
+    <input class="field" id="login-pass" type="password" placeholder="Password" autocomplete="current-password" required/>
+    <button class="submit" type="submit" id="login-btn">▶ Login</button>
+    <div class="err" id="login-err"></div>
+  </form>
+
+  <!-- Register Form -->
+  <form id="form-register" style="display:none" onsubmit="doRegister(event)">
+    <input class="field" id="reg-user" type="text" placeholder="Username" autocomplete="username" required/>
+    <input class="field" id="reg-email" type="email" placeholder="Email" autocomplete="email" required/>
+    <input class="field" id="reg-pass" type="password" placeholder="Password (min 6 chars)" autocomplete="new-password" required minlength="6"/>
+    <button class="submit" type="submit" id="reg-btn">✦ Create Account</button>
+    <div class="err" id="reg-err"></div>
+  </form>
+
+  <a class="guest" href="/">Continue as guest →</a>
+  <div class="divider"></div>
+  <div class="footer">Your visualizations will be saved to your account</div>
+</div>
+</div>
+
+<script>
+const token = localStorage.getItem('algo_token');
+if (token) {
+  fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+    .then(r => { if (r.ok) window.location.href = '/'; });
+}
+
+function switchTab(tab) {
+  document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tab-login').className    = 'tab ' + (tab === 'login'    ? 'on' : 'off');
+  document.getElementById('tab-register').className = 'tab ' + (tab === 'register' ? 'on' : 'off');
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = msg ? 'block' : 'none';
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  showErr('login-err', '');
+  document.getElementById('login-btn').disabled = true;
+  try {
+    const res  = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+    const data = await res.json();
+    if (!res.ok) { showErr('login-err', data.error); document.getElementById('login-btn').disabled = false; return; }
+    localStorage.setItem('algo_token', data.token);
+    localStorage.setItem('algo_user', JSON.stringify(data.user));
+    window.location.href = '/';
+  } catch { showErr('login-err', 'Connection error.'); document.getElementById('login-btn').disabled = false; }
+}
+
+async function doRegister(e) {
+  e.preventDefault();
+  const username = document.getElementById('reg-user').value.trim();
+  const email    = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-pass').value;
+  showErr('reg-err', '');
+  document.getElementById('reg-btn').disabled = true;
+  try {
+    const res  = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, email, password }) });
+    const data = await res.json();
+    if (!res.ok) { showErr('reg-err', data.error); document.getElementById('reg-btn').disabled = false; return; }
+    localStorage.setItem('algo_token', data.token);
+    localStorage.setItem('algo_user', JSON.stringify(data.user));
+    window.location.href = '/';
+  } catch { showErr('reg-err', 'Connection error.'); document.getElementById('reg-btn').disabled = false; }
+}
+
+document.querySelectorAll('.field').forEach(f => {
+  f.addEventListener('keydown', e => { if (e.key === 'Enter') f.closest('form').requestSubmit(); });
+});
+</script>
+</body>
+</html>
